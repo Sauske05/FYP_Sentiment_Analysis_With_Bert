@@ -13,7 +13,7 @@ class Tokenizer():
         input_token = self.tokenizer(
             input_text, padding='max_length',
             truncation=True, max_length= max_length,
-            return_tensors=self.return_tensors
+            return_tensors=self.return_tensors, 
         )
         return input_token
     
