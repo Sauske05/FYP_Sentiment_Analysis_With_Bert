@@ -2,7 +2,7 @@
 """
 Created on Tue Oct  8 07:44:09 2024
 
-@author: LENOVO
+@author: Arun Joshi
 """
 
 
@@ -39,9 +39,10 @@ def test_dataset():
     ds_0 = dataset_obj.__getitem__(0)
     print(ds_0)
     
-    print(dataset_obj.__len__())
+    #print(dataset_obj.__len__())
+    return ds_0
     
-#test_dataset()
+ds = test_dataset()
 
 #Testing the Input Embeddings
 
@@ -55,9 +56,55 @@ def test_input_embed():
     
     embedding_layer = InputEmbedding(128,tokenizer.get_vocabsize(), 0)
     input_embedding = embedding_layer(tokenized_input['input_ids'])
-    print(tokenized_input['input_ids'].unsqueeze(-1).shape)
-    print(input_embedding.shape)
+    #print(tokenized_input['input_ids'].unsqueeze(-1).shape)
+    #print(input_embedding.shape)
     return input_embedding
     
 #input_embedding = test_input_embed()
 #print(input_embedding)
+
+
+#Testing Postional Encoding
+def test_postional_layer():
+    from model import PositionalEncoding
+    from configure import config
+    import torch
+    positional_layer = PositionalEncoding(128, config()['seq_length'])
+    
+    test_data = torch.randn(1,100,128)
+    
+    pos_embeded_x = positional_layer(test_data)
+    
+    return pos_embeded_x
+
+#pos_embed_x = test_postional_layer()
+
+#print(f'Shape of pos_embed_x : {pos_embed_x.shape}')
+#print(pos_embed_x)
+
+#Testing MultiHead Attention:
+
+    
+def test_multiheadAttention():
+    from model import MultiHeadAttention
+    from configure import config
+    import torch
+    test_data = torch.randn(1,100,128)
+    
+
+    attn_mask = ((ds['input_mask_ids'].T @ ds['input_mask_ids']).expand(1,4,100,100))    
+    attention_layer = MultiHeadAttention(config()['h'], config()['d_model'])
+    
+    return attention_layer(test_data,test_data,test_data,attn_mask)
+
+
+#contextual_x = test_multiheadAttention()
+
+#print(f'Shape of the contextual tensor : {contextual_x.shape}')
+#print(contextual_x)
+
+
+#Testing Residual Connection Layer for Attention:
+
+    
+    

@@ -6,7 +6,7 @@ Created on Tue Oct  8 07:46:16 2024
 """
 from torch import nn 
 import math
-import numpy as np
+#import numpy as np
 import torch
 class InputEmbedding(nn.Module):
     def __init__(self, d_model:int, vocab_size:int, padding_idx:int) -> None:
@@ -66,3 +66,73 @@ class PositionalEncoding(nn.Module):
         """
         x = x + self.pe[:x.size(0)]
         return self.dropout(x)
+    
+class MultiHeadAttention(nn.Module):
+    def __init__(self, h:int, d_model:int):
+        super().__init__()
+        self.h = h
+        self.d_model = d_model
+        self.d_k = d_model // h
+        assert d_model % h == 0, 'Make sure d_model is divisible by h'
+        self.linear_layer1 = nn.Linear(d_model, d_model, bias = False)
+        self.linear_layer2 = nn.Linear(d_model, d_model, bias = False)
+        self.linear_layer3 = nn.Linear(d_model, d_model, bias = False)
+        self.linear_layer4 = nn.Linear(d_model,d_model, bias = False)
+    
+    def forward(self,q,k,v,src_mask):
+        query = self.linear_layer1(q) # (Batch, seq_len, d_model)
+        key = self.linear_layer2(k) # (Batch, seq_len, d_model)
+        value = self.linear_layer3(v) # (Batch, seq_len, d_model)
+        
+        #We need to reshape the q, k,v tensors in the shape (Batch, h, seq_len, d_k) first
+        # Since d_k * h == d_model, we can reshape our tensor as (Batch, seq_len, h, d_k) and rearragne the dimensions
+        query = query.view(query.shape[0], query.shape[1], self.h, self.d_k).transpose(1,2)
+        key = key.view(value.shape[0], key.shape[1], self.h, self.d_k).transpose(1,2)
+        value = value.view(value.shape[0], value.shape[1], self.h, self.d_k).transpose(1,2)
+        
+        
+        x = self.attention_block(query, key, value, src_mask)
+        x = x.transpose(1,2).contiguous().view(x.shape[0], -1, self.h * self.d_k)
+        
+        return self.linear_layer4(x)
+        
+    def attention_block(self, query, key, value, mask):
+        #the masking will also be of shape (batch,h,seq_len,seq_len)
+        attention_scores = torch.matmul(query, key.transpose(-2,-1))/math.sqrt(self.d_k)
+        #Attention_scores will be of (batch_size, h, seq_len,seq_len) -> (1,4,100,100)
+        if mask is not None:
+            attention_scores.masked_fill(mask == 0, -1e-9)
+        attention_scores = torch.softmax(attention_scores, dim = -1)
+        return attention_scores @ value # -> (1, head, seq_len, d_k)
+
+
+class LayerNormalization(nn.Module):
+    def __init__(self):
+        pass
+    
+    def forward(self):
+        pass
+    
+class ResidualConnection(nn.Module):
+    def __init__(self):
+        pass
+    
+    def forward(self):
+        pass
+        
+class FeedForwardNet(nn.Module):
+    def __init__(self):
+        pass
+    
+    def forward(self):
+        pass
+    
+class ProjectionLayer(nn.Module):
+    def __init__(self):
+        pass
+    
+    def forward(self):
+        pass
+        
+        
+    
