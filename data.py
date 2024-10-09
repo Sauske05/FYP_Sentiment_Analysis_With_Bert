@@ -52,13 +52,16 @@ def dataloader():
     y_test = y_test.reset_index(drop=True)
     train_dataset = CustomDataset(X_train, y_train, 100)
     test_dataset = CustomDataset(X_test, y_test, 100)
-    train_dataloader = DataLoader(train_dataset, batch_size=2, shuffle=True)
-    test_dataloader = DataLoader(test_dataset, batch_size=2, shuffle=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=True)
+    test_dataloader = DataLoader(test_dataset, batch_size=4, shuffle=True)
     return train_dataloader, test_dataloader
 
 
 
-#train_dataloader, test_dataloader = dataloader()
+train_dataloader, test_dataloader = dataloader()
+
+
+
 
 '''
 # Inspect the batches and their shapes
@@ -71,3 +74,14 @@ for i, batch_dict in enumerate(train_dataloader):
     print(batch_dict['raw_text_len'])
     break
 '''
+
+'''
+for index, batch in enumerate(train_dataloader):
+    print(batch['input_ids'].shape[0])
+    print(batch['label'].shape[0])
+'''
+
+
+last_batch = list(train_dataloader)[-1]
+print(last_batch['input_ids'].shape)
+print(last_batch['label'].shape)

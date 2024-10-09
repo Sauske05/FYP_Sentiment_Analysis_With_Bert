@@ -5,6 +5,10 @@ Created on Wed Oct  9 06:53:17 2024
 @author: Arun Joshi
 """
 
+import os
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+
+
 from configure import config
 from model import InputEmbedding
 from model import PositionalEncoding
@@ -16,6 +20,7 @@ import torch.nn as nn
 import torch
 from tqdm import tqdm
 #Define the encoding layer
+
 '''
 def encode():
     #Load our dataloaders
@@ -35,15 +40,13 @@ def encode():
         
 #Definine the training loop
 def train():
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    #device = torch.device('cpu')
     #Before encoding:
     train_dataloader, test_datatloader = dataloader()
-    model = SentimentModel(4,128,512,4)
-    model = model.to(device)
+    model = SentimentModel(4,128,512,7)
     optimizer = Adam(model.parameters(), lr = 0.01)
-    optimizer = optimizer
     loss_fn = nn.CrossEntropyLoss()
-    loss_fn = loss_fn
     #for data in train_dataloader:
         #test_data = data
         #break
@@ -54,31 +57,33 @@ def train():
         correct_predictions = 0
         loss_sum = 0
         for index, test_data in enumerate(train_dataloader):
-            input_data = test_data['input_ids'].to(device)
-            target = test_data['label'].to(device)
+            input_data = test_data['input_ids']
+            target = test_data['label']
             mask = test_data['input_mask_ids'].transpose(-1,-2)
     #print(f'Mask shape: {mask.shape}')
     #print(f'Mask shape : {mask.T.shape}')
             attn_mask = ((mask@
-                      mask.transpose(-1,-2)).unsqueeze(1).expand(-1, 4, -1, -1)).to(device)
+                      mask.transpose(-1,-2)).unsqueeze(1).expand(-1, 4, -1, -1))
     
     
             output = model(input_data, attn_mask)
-            #target =targe.to(device)
+            #target =torch.tensor([1,2])
     
             loss = loss_fn(output, target)
             loss.backward()
             loss_sum += loss
-    
+            #print("Output shape:", output.shape)
+            #print("Target shape:", target.shape)
+
             optimizer.step()
             actual_output = torch.argmax(output, dim = 1)
             correct_predictions += (actual_output == target).sum().item()
             optimizer.zero_grad()
             
             if (index % 1000 == 0):
-                print(f'Epoch : {epoch}/{epoches}, Batch {index} / len(train_dataloader) -> Loss : {loss.item()}')
+                print(f'Epoch : {epoch}/{epoches}, Batch {index} / {len(train_dataloader)} -> Loss : {loss.item()}')
         print(f'Loss in epoch {epoch} : {loss_sum/ len(train_dataloader)}')
-        print(f'Epoch {epoch} -> Accuracy : {correct_predictions/len(train_dataloader)}')
+        print(f'Epoch {epoch} -> Accuracy : {correct_predictions/len(train_dataloader) * 4}')
         progress_bar.update(1)
     progress_bar.close()
     return output, target

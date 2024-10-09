@@ -21,6 +21,8 @@ class CustomDataset(Dataset):
             label_dictionary[value] = index
 
         self.label =self.label.map(label_dictionary)
+        
+        print(label_dictionary)
     def __len__(self):
         return len(self.label)
     

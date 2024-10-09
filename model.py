@@ -215,7 +215,7 @@ class SentimentModel(nn.Module):
         #self.input_mask = input_mask
     def forward(self,x, mask): #x here should me the tokenized input id from dataloaders
         x = self.input_embed_layer(x.transpose(-1,-2))
-        x = self.positional_layer(x.squeeze()
+        x = self.positional_layer(x.squeeze(dim = -2)
                                              )
         encoder_output = self.encoder(x, mask)
         final_output = self.proj_layer(encoder_output)
