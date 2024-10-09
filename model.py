@@ -8,6 +8,7 @@ from torch import nn
 import math
 # import numpy as np
 import torch
+from tokenizer import Tokenizer
 
 
 class InputEmbedding(nn.Module):
@@ -86,6 +87,7 @@ class MultiHeadAttention(nn.Module):
         self.linear_layer2 = nn.Linear(d_model, d_model, bias=False)
         self.linear_layer3 = nn.Linear(d_model, d_model, bias=False)
         self.linear_layer4 = nn.Linear(d_model, d_model, bias=False)
+        self.dropout_layer = nn.Dropout(dropout)
 
     def forward(self, q, k, v, src_mask):
         query = self.linear_layer1(q)  # (Batch, seq_len, d_model)
@@ -101,20 +103,23 @@ class MultiHeadAttention(nn.Module):
         value = value.view(
             value.shape[0], value.shape[1], self.h, self.d_k).transpose(1, 2)
 
-        x = self.attention_block(query, key, value, src_mask)
+        x = self.attention_block(query, key, value, src_mask, self.dropout_layer)
         x = x.transpose(1, 2).contiguous().view(
             x.shape[0], -1, self.h * self.d_k)
 
         return self.linear_layer4(x)
 
-    def attention_block(self, query, key, value, mask):
+    def attention_block(self, query, key, value, mask, dropout:nn.Dropout):
         # the masking will also be of shape (batch,h,seq_len,seq_len)
         attention_scores = torch.matmul(
             query, key.transpose(-2, -1))/math.sqrt(self.d_k)
         # Attention_scores will be of (batch_size, h, seq_len,seq_len) -> (1,4,100,100)
         if mask is not None:
             attention_scores.masked_fill(mask == 0, -1e-9)
+        
         attention_scores = torch.softmax(attention_scores, dim=-1)
+        if dropout is not None:
+            attention_scores = dropout(attention_scores)
         return attention_scores @ value  # -> (1, head, seq_len, d_k)
 
 
@@ -137,9 +142,11 @@ class ResidualConnection(nn.Module):
     def __init__(self, dropout:float = 0.1):
         super().__init__()
         self.norm = LayerNorm()
+        self.dropout = nn.Dropout(dropout)
 
     def forward(self, x, sublayer):
-        return self.norm(x + sublayer(x))
+        return self.norm(x + self.dropout(sublayer(x)))
+        
 
 
 class FeedForwardNet(nn.Module):
@@ -150,10 +157,11 @@ class FeedForwardNet(nn.Module):
         self.linear_layer1 = nn.Linear(d_model, d_ff)
         self.linear_layer2 = nn.Linear(d_ff,d_model)
         self.relu = nn.ReLU()
+        self.dropout_layer = nn.Dropout(dropout)
 
     def forward(self,x):
         return self.linear_layer2(
-            self.relu(self.linear_layer1(x)))
+            self.dropout_layer(self.relu(self.linear_layer1(x))))
 
 
 class ProjectionLayer(nn.Module):
@@ -167,7 +175,8 @@ class ProjectionLayer(nn.Module):
 
     def forward(self,x):
         pooled_output = torch.mean(x, dim=1)  # Averaging over seq_len
-        return self.softmax_layer(self.linear_layer(pooled_output))
+        #return self.softmax_layer(self.linear_layer(pooled_output))
+        return self.linear_layer(pooled_output)
     
     
 class EncoderBlock(nn.Module):
@@ -196,12 +205,18 @@ class Encoders(nn.Module):
 class SentimentModel(nn.Module):
     def __init__(self, h:int, d_model:int,d_ff:int,unique_labels:int):
         super().__init__()
+        self.tokenizer = Tokenizer()
+        self.input_embed_layer = InputEmbedding(d_model,self.tokenizer.get_vocabsize(),0)
+        self.positional_layer = PositionalEncoding(d_model,100)
         self.encoder = EncoderBlock(MultiHeadAttention(h, d_model), 
                                     FeedForwardNet(d_model, d_ff))
         self.proj_layer = ProjectionLayer(d_model, unique_labels)
         #self.input_embeddings = input_embeddings
         #self.input_mask = input_mask
-    def forward(self,x, mask):
+    def forward(self,x, mask): #x here should me the tokenized input id from dataloaders
+        x = self.input_embed_layer(x.transpose(-1,-2))
+        x = self.positional_layer(x.squeeze()
+                                             )
         encoder_output = self.encoder(x, mask)
         final_output = self.proj_layer(encoder_output)
         return final_output

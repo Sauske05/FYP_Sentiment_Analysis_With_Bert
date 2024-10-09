@@ -15,14 +15,16 @@ def test_tokenizer():
     from tokenizer import Tokenizer
 
     tokenizer_obj = Tokenizer()
-    test_sentence = 'Hello, How are you?'
+    test_sentence = ['Hello, How are you?', 'I am fine']
 
     tokenized_input = tokenizer_obj.tokenize(test_sentence, 100)
     return tokenized_input, tokenizer_obj
     # print(tokenized_input)
-
-# test_tokenizer()
-
+'''
+tokenized_input, _ = test_tokenizer()
+text = tokenized_input['input_ids']
+print(f'Inital data: {text.shape}')
+'''
 
 # Testing the dataset class
 
@@ -197,7 +199,8 @@ def sentiment_model():
     input_embedding_initial = test_input_embed()
     input_embedding = test_postional_layer(input_embedding_initial)
     
-    mask  =ds['input_mask_ids']
+    mask = ((ds['input_mask_ids'].T @
+                 ds['input_mask_ids']).expand(1, 4, 100, 100))
     sentiment_obj = SentimentModel(config()['h'], config()['d_model'], 
                                    config()['d_ff'], config()['labels'])
     return sentiment_obj(input_embedding, mask)
