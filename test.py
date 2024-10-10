@@ -209,3 +209,12 @@ output = sentiment_model()
 
 print(output)
 
+
+
+def cuda_test():
+    import torch
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    #return device
+    print(device)
+    
+#cuda_test()

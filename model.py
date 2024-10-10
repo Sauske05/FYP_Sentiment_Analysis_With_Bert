@@ -134,7 +134,7 @@ class LayerNorm(nn.Module):
         mean = torch.mean(x, dim=-1, keepdim=True)  # -> (Batch, seq_len, 1)
         var = torch.var(x, dim=-1, keepdim=True)
 
-        x = ((x - mean) * self.gamma)/torch.sqrt(var + self.eps)
+        x = ((x - mean) * self.gamma)/torch.sqrt(var + self.eps) + self.beta
         return x
 
 
@@ -170,7 +170,7 @@ class ProjectionLayer(nn.Module):
         self.d_model = d_model
         self.unique_labels = unique_labels
         self.linear_layer = nn.Linear(d_model, unique_labels)
-        self.softmax_layer = nn.Softmax(dim = -1)
+        #self.softmax_layer = nn.Softmax(dim = -1)
         
 
     def forward(self,x):

@@ -24,22 +24,37 @@ def clean_data():
     df.to_csv('clean_data.csv')
 
 #clean_data()
+#import pandas as pd
 def raw_data():
-    df = pd.read_csv('clean_data.csv')
+    df = pd.read_excel('mod_data.xlsx')
+    df = df.dropna()
+    # Find the indices of rows where 'status' equals 'Anxiety' or 'Personality disorder'
+    #rows_to_drop = df[(df['status'] == 'Anxiety') | (df['status'] == 'Personality disorder')].index
+
+    # Drop those rows from the DataFrame
+    # = df.drop(rows_to_drop)
     print(f'Shape of df after dropping null val: {df.shape}')
     raw_text = df['statement']
     labels = df['status']
+    
+    label_dictionary = {}
+    for index, label in enumerate(labels.unique()):
+        label_dictionary[label] = index
+
+    labels =labels.map(label_dictionary)
+    print('Label Dict of the data.py file:')
+    print(label_dictionary)
     return raw_text, labels
     
 
-#raw_texts, labels, df = raw_data()
-'''
+raw_texts, labels= raw_data()
+
 print(f'Shape of raw_texts: {raw_texts.shape}')
 print(f'Shape of labels: {labels.shape}')
 print(f'Unique values of labels : {labels.value_counts()}')
 print(f'Null values of raw_text: {raw_texts.isnull().sum()}')
 print(f'Null values of labels : {labels.isnull().sum()}')
-'''
+
 
 def dataloader():
     raw_texts, labels  = raw_data()
@@ -82,6 +97,6 @@ for index, batch in enumerate(train_dataloader):
 '''
 
 
-last_batch = list(train_dataloader)[-1]
-print(last_batch['input_ids'].shape)
-print(last_batch['label'].shape)
+#last_batch = list(train_dataloader)[-1]
+#print(last_batch['input_ids'].shape)
+#print(last_batch['label'].shape)
