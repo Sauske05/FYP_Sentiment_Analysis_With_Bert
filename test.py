@@ -19,12 +19,12 @@ def test_tokenizer():
 
     tokenized_input = tokenizer_obj.tokenize(test_sentence, 100)
     return tokenized_input, tokenizer_obj
-    # print(tokenized_input)
-'''
+    #print(tokenized_input)
+
 tokenized_input, _ = test_tokenizer()
 text = tokenized_input['input_ids']
 print(f'Inital data: {text.shape}')
-'''
+
 
 # Testing the dataset class
 
@@ -93,18 +93,21 @@ def test_multiheadAttention():
     from model import MultiHeadAttention
     from configure import config
     import torch
-    test_data = torch.randn(1, 100, 128)
+    test_data = torch.randn(1, 100, 512)
 
     attn_mask = ((ds['input_mask_ids'].T @
                  ds['input_mask_ids']).expand(1, 4, 100, 100))
     attention_layer = MultiHeadAttention(config()['h'], config()['d_model'])
+    print(f'This is the attn_mask before: {ds["input_mask_ids"].shape}')
+    print(f'This is the attn_mask aftere: {attn_mask.shape}')
 
     return attention_layer(test_data, test_data, test_data, attn_mask)
 
 
-# contextual_x = test_multiheadAttention()
+#contextual_x = test_multiheadAttention()
 
-# print(f'Shape of the contextual tensor : {contextual_x.shape}')
+
+#print(f'Shape of the contextual tensor : {contextual_x.shape}')
 # print(contextual_x)
 
 
@@ -205,9 +208,9 @@ def sentiment_model():
                                    config()['d_ff'], config()['labels'])
     return sentiment_obj(input_embedding, mask)
 
-output = sentiment_model()
+#output = sentiment_model()
 
-print(output)
+#print(output)
 
 
 
@@ -218,3 +221,20 @@ def cuda_test():
     print(device)
     
 #cuda_test()
+
+import torch
+from model import *
+from configure import config
+if __name__ == "__main__":
+    input_embeddings = torch.randn(4,100,512)
+    mask = torch.randn(4,4,100,100)
+    multi_head_layer = MultiHeadAttention(config()['h'], config()['d_model'])
+    feed_forward_block = FeedForwardNet(config()['d_model'], config()['d_ff'])
+    encoder_layer = EncoderBlock(multi_head_layer, feed_forward_block)
+    proj_layer = ProjectionLayer(config()['d_model'], config()['labels'])
+
+    x_encoder_layer = encoder_layer(input_embeddings, mask)
+    print(f'Shape after Encoder layer: {x_encoder_layer.shape}')
+    output = proj_layer(x_encoder_layer)
+    print(f'Shape after Proj layer: {output.shape}')
+    

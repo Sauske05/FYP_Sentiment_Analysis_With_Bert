@@ -91,6 +91,7 @@ class MultiHeadAttention(nn.Module):
 
     def forward(self, q, k, v, src_mask):
         query = self.linear_layer1(q)  # (Batch, seq_len, d_model)
+        
         key = self.linear_layer2(k)  # (Batch, seq_len, d_model)
         value = self.linear_layer3(v)  # (Batch, seq_len, d_model)
 
